@@ -45,6 +45,7 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
 
     private lateinit var currentAddressTextView: TextView
+    private lateinit var btnOpenMap: Button
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var locationRequest: LocationRequest
@@ -79,6 +80,23 @@ class HomeFragment : Fragment() {
 
     private fun inicializaGerenciamentoLocalizacao(view: View) {
         currentAddressTextView = view.findViewById(R.id.currentAddressTextView)
+        btnOpenMap = view.findViewById(R.id.btnOpenMap)
+        
+        btnOpenMap.setOnClickListener {
+            val locationStr = currentAddressTextView.text.toString()
+            if (locationStr.isNotEmpty() && !locationStr.startsWith("Error") && locationStr != "Buscando localização...") {
+                val uri = android.net.Uri.parse("geo:0,0?q=${android.net.Uri.encode(locationStr)}")
+                val mapIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                mapIntent.setPackage("com.google.android.apps.maps")
+                if (mapIntent.resolveActivity(requireActivity().packageManager) != null) {
+                    startActivity(mapIntent)
+                } else {
+                    startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri))
+                }
+            } else {
+                Toast.makeText(requireContext(), "Localização não disponível", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
@@ -192,8 +210,14 @@ class HomeFragment : Fragment() {
                             .inflate(R.layout.item_template, container, false)
 
                         val imageView = itemView.findViewById<ImageView>(R.id.item_image)
+                        val nomeView = itemView.findViewById<TextView>(R.id.item_nome)
+                        val descricaoView = itemView.findViewById<TextView>(R.id.item_descricao)
+                        val precoView = itemView.findViewById<TextView>(R.id.item_preco)
                         val enderecoView = itemView.findViewById<TextView>(R.id.item_endereco)
 
+                        nomeView.text = item.nome ?: "Sem Nome"
+                        descricaoView.text = item.descricao ?: "Sem descrição"
+                        precoView.text = if (item.preco != null) "R$ ${String.format("%.2f", item.preco)}" else "R$ 0,00"
                         enderecoView.text = "Endereço: ${item.endereco ?: "Não informado"}"
 
                         if (!item.imageUrl.isNullOrEmpty()) {
